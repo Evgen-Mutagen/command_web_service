@@ -13,9 +13,9 @@ public class UserRepository {
         try {
             Class.forName("org.postgresql.Driver");
             //для localhost
-//            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/habrdb", "user", "pass");
+            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/habrdb", "user", "pass");
             //для облачного сервера
-            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/admin", "admin", "aston");
+//            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/admin", "admin", "aston");
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
         }
@@ -34,7 +34,10 @@ public class UserRepository {
                 userExists = true;
             }
             rs.close();
-            if (userExists) return;
+            if (userExists) {
+                connection.commit();
+                return;
+            }
 
             int groupId = getGroupId(groupName);
             if (groupId == defaultValue) return;
@@ -230,7 +233,7 @@ public class UserRepository {
         return groupsNamesList;
     }
 
-    public List<String> getListOfGroupUsers(String groupName) {
+    public List<String> getListOfUsersByGroupName(String groupName) {
         List<String> groupsNamesList = new ArrayList<>();
         try {
             connection.setAutoCommit(false);
@@ -295,6 +298,92 @@ public class UserRepository {
             }
         }
         return roleName;
+    }
+
+    public List<String> getListOfChatIdByRoleName(String roleName) {
+        List<String> listOfChatId = new ArrayList<>();
+        try {
+            connection.setAutoCommit(false);
+            int roleId = getRoleId(roleName);
+            if (roleId == defaultValue) return listOfChatId;
+
+            preparedStatement = connection
+                    .prepareStatement("SELECT chat_id FROM users WHERE role_id = ?");
+            preparedStatement.setInt(1, roleId);
+            ResultSet rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                listOfChatId.add(rs.getString(1));
+            }
+            rs.close();
+            connection.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                preparedStatement.close();
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return listOfChatId;
+    }
+
+    public List<String> getListOfUsers() {
+        List<String> listOfUsers = new ArrayList<>();
+        try {
+            preparedStatement = connection.prepareStatement("SELECT user_name FROM users");
+            ResultSet rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                listOfUsers.add(rs.getString(1));
+            }
+            rs.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                preparedStatement.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return listOfUsers;
+    }
+
+    public void putChatIdByUserName(String chatId, String userName) {
+        try {
+            connection.setAutoCommit(false);
+
+            preparedStatement = connection
+                    .prepareStatement("SELECT user_name FROM users WHERE user_name = ?");
+            preparedStatement.setString(1, userName);
+            ResultSet rs = preparedStatement.executeQuery();
+            boolean userNotExists = true;
+            while (rs.next()) {
+                userNotExists = false;
+            }
+            rs.close();
+            if (userNotExists) {
+                connection.commit();
+                return;
+            }
+
+            preparedStatement = connection
+                    .prepareStatement("UPDATE users SET chat_id = ? WHERE user_name = ?");
+            preparedStatement.setString(1, chatId);
+            preparedStatement.setString(2, userName);
+            preparedStatement.executeUpdate();
+            connection.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                preparedStatement.close();
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private int getGroupId(String group) throws SQLException {

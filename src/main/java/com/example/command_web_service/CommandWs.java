@@ -12,9 +12,11 @@ public interface CommandWs {
     @WebMethod
     void insertUser(String user, String group, String role);
 
-//    List<String> getIdChatByRole(String roleName);
+    @WebMethod
+    List<String> getListOfChatIdByRoleName(String roleName);
 
-//    List<String> getListOfUsers();
+    @WebMethod
+    List<String> getListOfUsers();
 
     @WebMethod
     void updateUser(String user, String group, String role);
@@ -39,10 +41,11 @@ public interface CommandWs {
     List<String> getGroups();
 
     @WebMethod
-    List<String> getListOfGroupUsers(String groupName);
+    List<String> getListOfUsersByGroupName(String groupName);
 
     @WebMethod
     String getRoleNameByUserName(String userName);
 
-//    void putChatIdByUserName(String chatId, String userName);
+    @WebMethod
+    void putChatIdByUserName(String chatId, String userName);
 }

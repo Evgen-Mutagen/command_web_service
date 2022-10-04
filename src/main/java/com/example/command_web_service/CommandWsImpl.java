@@ -56,12 +56,28 @@ public class CommandWsImpl implements CommandWs {
     }
 
     @Override
-    public List<String> getListOfGroupUsers(@WebParam(name = "groupName") String groupName) {
-        return userRepository.getListOfGroupUsers(groupName);
+    public List<String> getListOfUsersByGroupName(@WebParam(name = "groupName") String groupName) {
+        return userRepository.getListOfUsersByGroupName(groupName);
     }
 
     @Override
     public String getRoleNameByUserName(String userName) {
         return userRepository.getRoleNameByUserName(userName);
+    }
+
+    @Override
+    public List<String> getListOfChatIdByRoleName(@WebParam(name = "roleName") String roleName) {
+        return userRepository.getListOfChatIdByRoleName(roleName);
+    }
+
+    @Override
+    public List<String> getListOfUsers() {
+        return userRepository.getListOfUsers();
+    }
+
+    @Override
+    public void putChatIdByUserName(@WebParam(name = "chatId") String chatId,
+                                    @WebParam(name = "userName") String userName) {
+        userRepository.putChatIdByUserName(chatId, userName);
     }
 }
