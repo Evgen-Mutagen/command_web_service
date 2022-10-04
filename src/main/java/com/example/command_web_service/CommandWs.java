@@ -9,19 +9,40 @@ import java.util.List;
 @SOAPBinding(style = SOAPBinding.Style.RPC)
 public interface CommandWs {
 
-    //inserts user by userName, group, role
     @WebMethod
     void insertUser(String user, String group, String role);
 
-    //updates user by userName, group, role
+//    List<String> getIdChatByRole(String roleName);
+
+//    List<String> getListOfUsers();
+
     @WebMethod
     void updateUser(String user, String group, String role);
 
-    //deletes user by name
     @WebMethod
     void deleteUser(String user);
 
-    //returns list of usersNames by role
     @WebMethod
-    List<String> getUsersNamesByRoles(String role);
+    List<String> getUserNameListByRoleName(String roleName);
+
+    @WebMethod
+    void insertGroup(String groupName);
+
+    @WebMethod
+    void updateGroup(String oldGroupName, String newGroupName);
+
+    //удаляет всю группу со всеми юзерами каскадно!!!!!
+    @WebMethod
+    void deleteGroup(String groupName);
+
+    @WebMethod
+    List<String> getGroups();
+
+    @WebMethod
+    List<String> getListOfGroupUsers(String groupName);
+
+    @WebMethod
+    String getRoleNameByUserName(String userName);
+
+//    void putChatIdByUserName(String chatId, String userName);
 }

@@ -7,33 +7,44 @@ import java.util.List;
 public class UserRepository {
     private final int defaultValue = Integer.MAX_VALUE;
     private static Connection connection;
-    private PreparedStatement preparedStatement;
+    private static PreparedStatement preparedStatement;
 
     static {
         try {
             Class.forName("org.postgresql.Driver");
             //для localhost
-            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/habrdb", "user", "pass");
+//            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/habrdb", "user", "pass");
             //для облачного сервера
-//            connection = DriverManager.getConnection("jdbc:postgresql://185.46.11.164/admin", "admin", "aston");
+            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/admin", "admin", "aston");
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public void insert(String user_name, String group_id, String role_id) {
+    public void insertUser(String userName, String groupName, String roleName) {
         try {
             connection.setAutoCommit(false);
 
-            int groupId = getGroupId(group_id);
+            preparedStatement = connection
+                    .prepareStatement("SELECT user_name FROM users WHERE user_name = ?");
+            preparedStatement.setString(1, userName);
+            ResultSet rs = preparedStatement.executeQuery();
+            boolean userExists = false;
+            while (rs.next()) {
+                userExists = true;
+            }
+            rs.close();
+            if (userExists) return;
+
+            int groupId = getGroupId(groupName);
             if (groupId == defaultValue) return;
 
-            int roleId = getRoleId(role_id);
+            int roleId = getRoleId(roleName);
             if (roleId == defaultValue) return;
 
             preparedStatement = connection
                     .prepareStatement("INSERT INTO users(user_name, group_id, role_id) VALUES (?, ?, ?)");
-            preparedStatement.setString(1, user_name);
+            preparedStatement.setString(1, userName);
             preparedStatement.setInt(2, groupId);
             preparedStatement.setInt(3, roleId);
             preparedStatement.executeUpdate();
@@ -50,21 +61,21 @@ public class UserRepository {
         }
     }
 
-    public void update(String user_name, String group_id, String role_id) {
+    public void updateUser(String userName, String groupName, String roleName) {
         try {
             connection.setAutoCommit(false);
 
-            int groupId = getGroupId(group_id);
+            int groupId = getGroupId(groupName);
             if (groupId == defaultValue) return;
 
-            int roleId = getRoleId(role_id);
+            int roleId = getRoleId(roleName);
             if (roleId == defaultValue) return;
 
             preparedStatement = connection
                     .prepareStatement("UPDATE users SET group_id = ?, role_id = ? WHERE user_name = ?");
             preparedStatement.setInt(1, groupId);
             preparedStatement.setInt(2, roleId);
-            preparedStatement.setString(3, user_name);
+            preparedStatement.setString(3, userName);
             preparedStatement.executeUpdate();
             connection.commit();
         } catch (SQLException e) {
@@ -79,7 +90,7 @@ public class UserRepository {
         }
     }
 
-    public void delete(String user_name) {
+    public void deleteUser(String user_name) {
         try {
             preparedStatement = connection.prepareStatement("DELETE FROM users WHERE user_name = ?");
             preparedStatement.setString(1, user_name);
@@ -110,6 +121,7 @@ public class UserRepository {
                 usersNamesList.add(rs.getString(1));
             }
             connection.commit();
+            rs.close();
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
@@ -121,6 +133,168 @@ public class UserRepository {
             }
         }
         return usersNamesList;
+    }
+
+    public void insertGroup(String groupName) {
+        try {
+            connection.setAutoCommit(false);
+            int groupId = getGroupId(groupName);
+            if (groupId != defaultValue) return;
+
+            preparedStatement = connection
+                    .prepareStatement("INSERT INTO groups (id, name) VALUES (DEFAULT , ?)");
+            preparedStatement.setString(1, groupName);
+            preparedStatement.executeUpdate();
+            connection.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                preparedStatement.close();
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void updateGroup(String oldGroupName, String newGroupName) {
+        try {
+            connection.setAutoCommit(false);
+            int groupId = getGroupId(oldGroupName);
+            if (groupId == defaultValue) return;
+            preparedStatement = connection
+                    .prepareStatement("UPDATE groups SET name = ? WHERE id = ?");
+            preparedStatement.setString(1, newGroupName);
+            preparedStatement.setInt(2, groupId);
+            preparedStatement.executeUpdate();
+            connection.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                preparedStatement.close();
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void deleteGroup(String groupName) {
+        try {
+            connection.setAutoCommit(false);
+            int groupId = getGroupId(groupName);
+            if (groupId == defaultValue) return;
+
+            preparedStatement = connection
+                    .prepareStatement("DELETE FROM users WHERE group_id = ?");
+            preparedStatement.setInt(1, groupId);
+            preparedStatement.executeUpdate();
+
+            preparedStatement = connection
+                    .prepareStatement("DELETE FROM groups WHERE name = ?");
+            preparedStatement.setString(1, groupName);
+            preparedStatement.executeUpdate();
+            connection.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                preparedStatement.close();
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public List<String> getGroups() {
+        List<String> groupsNamesList = new ArrayList<>();
+        try {
+            preparedStatement = connection.prepareStatement("SELECT name FROM groups");
+            ResultSet rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                groupsNamesList.add(rs.getString(1));
+            }
+            rs.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                preparedStatement.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return groupsNamesList;
+    }
+
+    public List<String> getListOfGroupUsers(String groupName) {
+        List<String> groupsNamesList = new ArrayList<>();
+        try {
+            connection.setAutoCommit(false);
+            int groupId = getGroupId(groupName);
+            if (groupId == defaultValue) return groupsNamesList;
+
+            preparedStatement = connection
+                    .prepareStatement("SELECT user_name FROM users WHERE group_id = ?");
+            preparedStatement.setInt(1, groupId);
+            ResultSet rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                groupsNamesList.add(rs.getString(1));
+            }
+            rs.close();
+            connection.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                preparedStatement.close();
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return groupsNamesList;
+    }
+
+    public String getRoleNameByUserName(String userName) {
+        String roleName = null;
+        int roleId = defaultValue;
+        ResultSet rs;
+        try {
+            connection.setAutoCommit(false);
+            preparedStatement = connection.prepareStatement("SELECT role_id FROM users WHERE user_name = ?");
+            preparedStatement.setString(1, userName);
+            rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                roleId = rs.getInt(1);
+            }
+            if (roleId == defaultValue) {
+                rs.close();
+                connection.commit();
+                return null;
+            }
+            preparedStatement = connection.prepareStatement("SELECT name FROM roles WHERE id = ?");
+            preparedStatement.setInt(1, roleId);
+            rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                roleName = rs.getString(1);
+            }
+            rs.close();
+            connection.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                preparedStatement.close();
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return roleName;
     }
 
     private int getGroupId(String group) throws SQLException {
@@ -136,6 +310,7 @@ public class UserRepository {
                 connection.commit();
             }
         }
+        rs.close();
         return groupId;
     }
 
@@ -152,6 +327,7 @@ public class UserRepository {
                 connection.commit();
             }
         }
+        rs.close();
         return roleId;
     }
 }

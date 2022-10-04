@@ -11,26 +11,57 @@ public class CommandWsImpl implements CommandWs {
     private final UserRepository userRepository = new UserRepository();
 
     @Override
-    public void insertUser(@WebParam(name = "user") String user,
-                           @WebParam(name = "group") String group,
-                           @WebParam(name = "role") String role) {
-        userRepository.insert(user, group, role);
+    public void insertUser(@WebParam(name = "userName") String user,
+                           @WebParam(name = "groupName") String group,
+                           @WebParam(name = "roleName") String role) {
+        userRepository.insertUser(user, group, role);
     }
 
     @Override
-    public void updateUser(@WebParam(name = "user") String user,
-                           @WebParam(name = "group") String group,
-                           @WebParam(name = "role") String role) {
-        userRepository.update(user, group, role);
+    public void updateUser(@WebParam(name = "userName") String user,
+                           @WebParam(name = "newGroupName") String group,
+                           @WebParam(name = "newRoleName") String role) {
+        userRepository.updateUser(user, group, role);
     }
 
     @Override
-    public void deleteUser(@WebParam(name = "user") String user) {
-        userRepository.delete(user);
+    public void deleteUser(@WebParam(name = "userName") String user) {
+        userRepository.deleteUser(user);
     }
 
     @Override
-    public List<String> getUsersNamesByRoles(@WebParam(name = "role") String role) {
+    public List<String> getUserNameListByRoleName(@WebParam(name = "roleName") String role) {
         return userRepository.getUsersNamesByRoles(role);
+    }
+
+    @Override
+    public void insertGroup(@WebParam(name = "groupName") String groupName) {
+        userRepository.insertGroup(groupName);
+    }
+
+    @Override
+    public void updateGroup(@WebParam(name = "oldGroupName") String oldGroupName,
+                            @WebParam(name = "newGroupName") String newGroupName) {
+        userRepository.updateGroup(oldGroupName, newGroupName);
+    }
+
+    @Override
+    public void deleteGroup(@WebParam(name = "groupName") String groupName) {
+        userRepository.deleteGroup(groupName);
+    }
+
+    @Override
+    public List<String> getGroups() {
+        return userRepository.getGroups();
+    }
+
+    @Override
+    public List<String> getListOfGroupUsers(@WebParam(name = "groupName") String groupName) {
+        return userRepository.getListOfGroupUsers(groupName);
+    }
+
+    @Override
+    public String getRoleNameByUserName(String userName) {
+        return userRepository.getRoleNameByUserName(userName);
     }
 }
