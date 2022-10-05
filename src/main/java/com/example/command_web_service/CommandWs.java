@@ -48,4 +48,7 @@ public interface CommandWs {
 
     @WebMethod
     void putChatIdByUserName(String chatId, String userName);
+
+    @WebMethod
+    String getChatIdByUserName(String UserName);
 }

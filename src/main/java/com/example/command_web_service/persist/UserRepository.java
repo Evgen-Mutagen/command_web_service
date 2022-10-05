@@ -13,9 +13,9 @@ public class UserRepository {
         try {
             Class.forName("org.postgresql.Driver");
             //для localhost
-            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/habrdb", "user", "pass");
+//            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/habrdb", "user", "pass");
             //для облачного сервера
-//            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/admin", "admin", "aston");
+            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/admin", "admin", "aston");
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
         }
@@ -384,6 +384,44 @@ public class UserRepository {
                 e.printStackTrace();
             }
         }
+    }
+
+    public String getChatIdByUserName(String userName) {
+        ResultSet rs;
+        String chatId = null;
+        try {
+            connection.setAutoCommit(false);
+            preparedStatement = connection.prepareStatement("SELECT user_name FROM users WHERE user_name = ?");
+            preparedStatement.setString(1, userName);
+            rs = preparedStatement.executeQuery();
+            boolean userExists = false;
+            while (rs.next()) {
+                userExists = true;
+            }
+            if (!userExists) {
+                connection.commit();
+                rs.close();
+                return null;
+            }
+
+            preparedStatement = connection.prepareStatement("SELECT chat_id FROM users WHERE user_name = ?");
+            preparedStatement.setString(1, userName);
+            rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                chatId = rs.getString(1);
+            }
+            rs.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                preparedStatement.close();
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return chatId;
     }
 
     private int getGroupId(String group) throws SQLException {

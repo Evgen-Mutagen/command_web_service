@@ -80,4 +80,9 @@ public class CommandWsImpl implements CommandWs {
                                     @WebParam(name = "userName") String userName) {
         userRepository.putChatIdByUserName(chatId, userName);
     }
+
+    @Override
+    public String getChatIdByUserName(String userName) {
+        return userRepository.getChatIdByUserName(userName);
+    }
 }
